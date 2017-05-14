@@ -142,30 +142,14 @@ app.post('/users', function(req, res) {
 app.post('/users/login', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
 
-	db.user.findOne({ where: { email: body.email } }).then(user => {
-		if (!user || !bcrypt.compareSync(body.password, user.password_hash)) {
-			return res.status(401).send();
-		}
-
+	db.user.authenticate(body).then(user => {
 		res.json(user.toPublicJSON());
-
-		// if (user) {
-		// 	let hashedPassword = bcrypt.hashSync(body.password, user.salt);
-
-		// 	if (hashedPassword === user.password_hash) {
-		// 		res.json(user.toPublicJSON());
-		// 	} else {
-		// 		res.status(401).send();
-		// 	}
-		// } else {
-		// 	res.status(401).send();
-		// }
 	}, error => {
-		res.status(500).send();
+		res.status(401).send();
 	});
 });
 
-db.sequelize.sync().then(function () {
+db.sequelize.sync({force: true}).then(function () {
 	app.listen(PORT, function () {
 		console.log('Express listening on port ' + PORT + '!');
 	});
