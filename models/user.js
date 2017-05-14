@@ -61,21 +61,30 @@ module.exports = function (sequelize, DataTypes) {
 						}
 
 						resolve(user);
-
-						// if (user) {
-						// 	let hashedPassword = bcrypt.hashSync(body.password, user.salt);
-
-						// 	if (hashedPassword === user.password_hash) {
-						// 		res.json(user.toPublicJSON());
-						// 	} else {
-						// 		res.status(401).send();
-						// 	}
-						// } else {
-						// 	res.status(401).send();
-						// }
 					}, error => {
 						reject();
 					});
+				});
+			},
+			findByToken: function (token) {
+				return new Promise(function (resolve, reject) {
+					try {
+						var decodedJWT = jwt.verify(token, 'qwerty098');
+						var bytes = cryptojs.AES.decrypt(decodedJWT.token, 'abc123!@#');
+						var tokenData = JSON.parse(bytes.toString(cryptojs.enc.Utf8));
+
+						user.findById(tokenData.id).then(function (user) {
+							if (user) {
+								resolve(user);
+							} else {
+								reject();
+							}
+						}, function (error) {
+							reject();
+						});
+					} catch (error) {
+						reject();
+					}
 				});
 			}
 		},
